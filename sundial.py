@@ -1,3 +1,4 @@
+from jinja2 import Template
 import math
 
 from svg_digit_paths import DigitPathGenerator
@@ -22,14 +23,20 @@ SVG_GNOMON = '''
   <path d="M 1300,600 L1300,0 L1667.5365,600 L1300,600" stroke="blue" fill="none" stroke-width="1"/>
 '''
 
+SVG_GNOMON_BASE_CUT = '''
+  <path d="M {{600.0 - width_mm / 2.0}},540 L{{600.0 + width_mm / 2.0}},540 L{{600.0 + width_mm / 2.0}},440 L{{600.0 - width_mm / 2.0}},440 L{{600.0 - width_mm / 2.0}},540" stroke="blue" fill="none" stroke-width="1"/>
+'''
+GNOMON_BASE_CUT_TEMPLATE = Template(SVG_GNOMON_BASE_CUT)
+
 SVG_HOUR_MARKER = '''
-  <path d="M600,400 L600,0" stroke="red" stroke-width="1" transform="rotate(%f 600 600)"/>
+  <path d="M600,400 L600,80" stroke="red" stroke-width="1" transform="rotate(%f 600 600)"/>
 '''
 
 SVG_QUARTER_HOUR_MARKER = '''
   <path d="M600,100 L600,70" stroke="red" stroke-width="1" transform="rotate(%f 600 600)"/>
 '''
 
+CM_PER_INCH = 2.54
 
 class SundialGenerator(object):
 
@@ -51,7 +58,7 @@ class SundialGenerator(object):
     
     def _hour_angles_degrees(self):
         begin_hour = 7 if self._dst else 6
-        end_hour = begin_hour + 12
+        end_hour = begin_hour + 11
         result = []
         for hour in range(begin_hour, end_hour + 1):
             result.append(self._hour_angle_tuple(hour))
@@ -59,7 +66,7 @@ class SundialGenerator(object):
 
     def _quarter_hour_angles_degrees(self):
         begin_hour = 7 if self._dst else 6
-        end_hour = begin_hour + 12
+        end_hour = begin_hour + 11
         result = []
         for hour in range(begin_hour, end_hour + 1):
             for qh in range(1,4):
@@ -70,13 +77,20 @@ class SundialGenerator(object):
         print SVG_HEADER
         print SVG_DIAL
         print SVG_GNOMON
+        first = True
         for marker in self._hour_angles_degrees():
+            print "# " + str(marker)
             print SVG_HOUR_MARKER % marker[1]
-            self._digit_gen.set_rotate('%f 0 600' % marker[1])
+            numeral = self._digit_gen.svg_numeral(marker[0] % 12)
+            self._digit_gen.set_rotate('%f 0 600' % (marker[1] - (0 if first else numeral[1])))
             self._digit_gen.set_translate('600 0')
-            print self._digit_gen.svg_numeral(marker[0] % 12)
+
+            numeral = self._digit_gen.svg_numeral(marker[0] % 12)
+            print numeral[0]
+            first = False
         for marker in self._quarter_hour_angles_degrees():
             print SVG_QUARTER_HOUR_MARKER % marker[1]
+        print GNOMON_BASE_CUT_TEMPLATE.render(width_mm=(self._material_thickness_inches * CM_PER_INCH * 10.0))
         print SVG_FOOTER
 
 if __name__ == '__main__':
