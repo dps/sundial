@@ -6,25 +6,24 @@ from svg_digit_paths import DigitPathGenerator
 SVG_HEADER = '''<?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="17cm" height="6cm" viewBox="0 0 1700 600"
+<svg width="{{width_cm}}cm" height="{{height_cm}}cm" viewBox="0 0 1700 600"
      xmlns="http://www.w3.org/2000/svg" version="1.1">
 '''
+HEADER_TEMPLATE = Template(SVG_HEADER)
 
-SVG_FOOTER = '''
-</svg>
-'''
+SVG_FOOTER = '</svg>'
 
-SVG_DIAL = '''
-  <path d="M1200,600 a600,600 0 0,0 -1200,0 z"
+SVG_DIAL = '''<path d="M1200,600 a600,600 0 0,0 -1200,0 z"
         fill="none" stroke="blue" stroke-width="1" />
 '''
 
 SVG_GNOMON = '''
-  <path d="M 1300,600 L1300,0 L1667.5365,600 L1300,600" stroke="blue" fill="none" stroke-width="1"/>
+  <path d="M 1300,600 L1300,160 L{{1300-notch_px}},160 L{{1300-notch_px}},60 L1300,60 L1300,0 L{{gnomon_height_px}},600 L1300,600" stroke="blue" fill="none" stroke-width="1"/>
 '''
+GNOMON_TEMPLATE = Template(SVG_GNOMON)
 
 SVG_GNOMON_BASE_CUT = '''
-  <path d="M {{600.0 - width_mm / 2.0}},540 L{{600.0 + width_mm / 2.0}},540 L{{600.0 + width_mm / 2.0}},440 L{{600.0 - width_mm / 2.0}},440 L{{600.0 - width_mm / 2.0}},540" stroke="blue" fill="none" stroke-width="1"/>
+  <path d="M {{600.0 - width_px / 2.0}},540 L{{600.0 + width_px / 2.0}},540 L{{600.0 + width_px / 2.0}},440 L{{600.0 - width_px / 2.0}},440 L{{600.0 - width_px / 2.0}},540" stroke="blue" fill="none" stroke-width="1"/>
 '''
 GNOMON_BASE_CUT_TEMPLATE = Template(SVG_GNOMON_BASE_CUT)
 
@@ -48,6 +47,7 @@ class SundialGenerator(object):
         self._material_thickness_inches = material_thickness_inches
         self._dst = dst
         self._digit_gen = DigitPathGenerator()
+        self._px_per_cm = 600.0 / (diameter_cm/2.0)
 
     def _hour_angle_tuple(self, hour):
         # phi = arctan(sin(latitude) tan(hour angle)), where noon = 0 degrees, 1pm = 15 degrees etc.
@@ -73,10 +73,15 @@ class SundialGenerator(object):
               result.append(self._hour_angle_tuple(hour + (qh/4.0)))
         return result
 
-    def generate(self, out_filename):
-        print SVG_HEADER
+    def generate(self):
+        print HEADER_TEMPLATE.render(height_cm=(self._diameter_cm/2), width_cm=((17.0/12.0) * self._diameter_cm))
         print SVG_DIAL
-        print SVG_GNOMON
+        thickness_px = (self._material_thickness_inches * CM_PER_INCH * self._px_per_cm)
+        #            ___--
+        #  .....----'    | <- sin(latitude) * 600
+        # ._____600______|
+        gnomon_right_px = 1300 + (self._sin_lat * 600.0)
+        print GNOMON_TEMPLATE.render(notch_px=thickness_px, gnomon_height_px=gnomon_right_px)
         first = True
         for marker in self._hour_angles_degrees():
             print "# " + str(marker)
@@ -90,9 +95,9 @@ class SundialGenerator(object):
             first = False
         for marker in self._quarter_hour_angles_degrees():
             print SVG_QUARTER_HOUR_MARKER % marker[1]
-        print GNOMON_BASE_CUT_TEMPLATE.render(width_mm=(self._material_thickness_inches * CM_PER_INCH * 10.0))
+        print GNOMON_BASE_CUT_TEMPLATE.render(width_px=thickness_px)
         print SVG_FOOTER
 
 if __name__ == '__main__':
-    sg = SundialGenerator(37.7749, -122.4194)
-    sg.generate('foo')
+    sg = SundialGenerator(37.7749, -122.4194, diameter_cm=24)
+    sg.generate()
