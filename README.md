@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/dps/sundial.png?branch=master)](https://travis-ci.org/dps/sundial)
 # sundial.py
 A sundial laser-cutter template generator
 
