@@ -9,7 +9,7 @@
 
   <path d="M 592.0625,540 L607.9375,540 L607.9375,440 L592.0625,440 L592.0625,540" stroke="blue" fill="none" stroke-width="1"/>
 
-  <path d="M 1300,260 L1300,160 L1284.125,160 L1284.125,60 L1300,60 L1300,0 L1667.53650736,600 L1300,260" stroke="blue" fill="none" stroke-width="1"/>
+  <path d="M 1100,260 L1100,160 L1084.125,160 L1084.125,60 L1100,60 L1100,0 L1467.53650736,600 L1100,260" stroke="blue" fill="none" stroke-width="1"/>
 # (7, -90.0)
 
   <path d="M600,400 L600,80" stroke="red" stroke-width="1" transform="rotate(-90.000000 600 600)"/>
