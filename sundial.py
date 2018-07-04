@@ -18,7 +18,7 @@ SVG_DIAL = '''<path d="M1200,600 a600,600 0 0,0 -1200,0 z"
 '''
 
 SVG_GNOMON = '''
-  <path d="M 1300,260 L1300,160 L{{1300-notch_px}},160 L{{1300-notch_px}},60 L1300,60 L1300,0 L{{gnomon_height_px}},600 L1300,260" stroke="blue" fill="none" stroke-width="1"/>
+  <path d="M 1100,260 L1100,160 L{{1100-notch_px}},160 L{{1100-notch_px}},60 L1100,60 L1100,0 L{{gnomon_height_px}},600 L1100,260" stroke="blue" fill="none" stroke-width="1"/>
 '''
 GNOMON_TEMPLATE = Template(SVG_GNOMON)
 
@@ -87,7 +87,7 @@ class SundialGenerator(object):
         #            ___--
         #  .....----'    | <- sin(latitude) * 600
         # ._____600______|
-        gnomon_right_px = 1300 + (self._sin_lat * 600.0)
+        gnomon_right_px = 1100 + (self._sin_lat * 600.0)
         print GNOMON_BASE_CUT_TEMPLATE.render(width_px=thickness_px)
         print GNOMON_TEMPLATE.render(notch_px=thickness_px, gnomon_height_px=gnomon_right_px)
         first = True
@@ -110,5 +110,5 @@ class SundialGenerator(object):
         print SVG_FOOTER
 
 if __name__ == '__main__':
-    sg = SundialGenerator(37.7749, -122.4194, diameter_cm=24, adapt_for_meridian=False)
+    sg = SundialGenerator(37.7749, -122.4194, diameter_cm=24, adapt_for_meridian=False, dst=True)
     sg.generate()
