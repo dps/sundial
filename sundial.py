@@ -18,7 +18,7 @@ SVG_DIAL = '''<path d="M1200,600 a600,600 0 0,0 -1200,0 z"
 '''
 
 SVG_GNOMON = '''
-  <path d="M 1300,600 L1300,160 L{{1300-notch_px}},160 L{{1300-notch_px}},60 L1300,60 L1300,0 L{{gnomon_height_px}},600 L1300,600" stroke="blue" fill="none" stroke-width="1"/>
+  <path d="M 1300,260 L1300,160 L{{1300-notch_px}},160 L{{1300-notch_px}},60 L1300,60 L1300,0 L{{gnomon_height_px}},600 L1300,260" stroke="blue" fill="none" stroke-width="1"/>
 '''
 GNOMON_TEMPLATE = Template(SVG_GNOMON)
 
