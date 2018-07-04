@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from jinja2 import Template
 import math
 
@@ -50,8 +51,9 @@ class SundialGenerator(object):
         self._dst = dst
         self._digit_gen = DigitPathGenerator()
         self._px_per_cm = 600.0 / (diameter_cm/2.0)
-        self._meridian = utc_offset_hrs * 15
         self._adapt_meridian = adapt_for_meridian
+        if self._adapt_meridian:
+          self._meridian = utc_offset_hrs * 15
 
     def _hour_angle_tuple(self, hour):
         # phi = arctan(sin(latitude) tan(hour angle)), where noon = 0 degrees, 1pm = 15 degrees etc.
@@ -81,34 +83,62 @@ class SundialGenerator(object):
         return result
 
     def generate(self):
-        print HEADER_TEMPLATE.render(height_cm=(self._diameter_cm/2), width_cm=((17.0/12.0) * self._diameter_cm))
-        print SVG_DIAL
+        result = ''
+        result += HEADER_TEMPLATE.render(height_cm=(self._diameter_cm/2), width_cm=((17.0/12.0) * self._diameter_cm))
+        result += SVG_DIAL
         thickness_px = (self._material_thickness_inches * CM_PER_INCH * self._px_per_cm)
         #            ___--
         #  .....----'    | <- sin(latitude) * 600
         # ._____600______|
         gnomon_right_px = 1100 + (self._sin_lat * 600.0)
-        print GNOMON_BASE_CUT_TEMPLATE.render(width_px=thickness_px)
-        print GNOMON_TEMPLATE.render(notch_px=thickness_px, gnomon_height_px=gnomon_right_px)
+        result += GNOMON_BASE_CUT_TEMPLATE.render(width_px=thickness_px)
+        result += GNOMON_TEMPLATE.render(notch_px=thickness_px, gnomon_height_px=gnomon_right_px)
         first = True
         for marker in self._hour_angles_degrees():
-            print "# " + str(marker)
-            print SVG_HOUR_MARKER % marker[1]
+            result += SVG_HOUR_MARKER % marker[1]
             numeral = self._digit_gen.svg_numeral(marker[0] % 12)
             self._digit_gen.set_rotate('%f 0 600' % (marker[1] - (0 if first else numeral[1])))
             self._digit_gen.set_translate('600 0')
 
             numeral = self._digit_gen.svg_numeral(marker[0] % 12)
-            print numeral[0]
+            result += numeral[0]
             first = False
         for marker in self._quarter_hour_angles_degrees():
-            print SVG_QUARTER_HOUR_MARKER % marker[1]
+            result += SVG_QUARTER_HOUR_MARKER % marker[1]
         if self._dst:
             self._digit_gen.set_rotate('0')
             self._digit_gen.set_translate('120 540')
-            print self._digit_gen.dst_text()
-        print SVG_FOOTER
+            result += self._digit_gen.dst_text()
+        result += SVG_FOOTER
+        return result
 
 if __name__ == '__main__':
-    sg = SundialGenerator(37.7749, -122.4194, diameter_cm=24, adapt_for_meridian=False, dst=True)
-    sg.generate()
+    parser = ArgumentParser()
+    parser.add_argument("-o", "--out", dest="outfile",
+                    help="write SVG to FILE")
+    parser.add_argument("--lat", dest="latitude", type=float,
+                    help="latitude in degrees", required=True)
+    parser.add_argument("--lng", dest="longitude", type=float,
+                    help="longitude in degrees", required=True)
+    parser.add_argument("-d", "--diameter", dest="diameter_cm", type=float,
+                    help="sundial diameter in cm", required=True)
+    parser.add_argument("-t", "--material_thickness_in", dest="thickness_in", type=float,
+                    help="sundial material thickness in inches", required=True)
+    parser.add_argument("--dst", dest="dst", action='store_true',
+                    help="mark dial in daylights savings time")
+    parser.add_argument("--adapt_for_meridian", dest="adapt_meridian", type=int,
+                    help=("compensate for difference between longitude and timezone meridian " + 
+                          "specified (e.g. pass -8 for Pacfic Timezone, 0 for GMT)"))
+    
+    args = parser.parse_args()
+
+    sg = SundialGenerator(args.latitude, args.longitude, args.diameter_cm, args.thickness_in,
+                          adapt_for_meridian=args.adapt_meridian, utc_offset_hrs=args.adapt_meridian,
+                          dst=args.dst)
+    svg = sg.generate()
+    if args.outfile == None:
+      print svg
+    else:
+      outfile = file(args.outfile, 'w')
+      outfile.write(svg)
+      outfile.close()
