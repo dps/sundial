@@ -39,7 +39,9 @@ CM_PER_INCH = 2.54
 
 class SundialGenerator(object):
 
-    def __init__(self, latitude, longitude, diameter_cm=12, material_thickness_inches=0.125, dst=False):
+    def __init__(self, latitude, longitude,
+                 diameter_cm=12, material_thickness_inches=0.125,
+                 dst=False, utc_offset_hrs=-8, adapt_for_meridian=True):
         self._lat = latitude
         self._sin_lat = math.sin(math.radians(float(latitude)))
         self._lng = longitude
@@ -48,12 +50,17 @@ class SundialGenerator(object):
         self._dst = dst
         self._digit_gen = DigitPathGenerator()
         self._px_per_cm = 600.0 / (diameter_cm/2.0)
+        self._meridian = utc_offset_hrs * 15
+        self._adapt_meridian = adapt_for_meridian
 
     def _hour_angle_tuple(self, hour):
         # phi = arctan(sin(latitude) tan(hour angle)), where noon = 0 degrees, 1pm = 15 degrees etc.
-
+        # meridian adjustment ref: http://www.planetary.org/explore/projects/earth-dial/how-to-read-a-sundial.html
         center = 13 if self._dst else 12
-        angle_radians = math.atan(self._sin_lat * math.tan(math.radians((hour - center) * 15)))
+        hour_degress = (hour - center) * 15
+        if self._adapt_meridian:
+            hour_degress += (self._lng - self._meridian)
+        angle_radians = math.atan(self._sin_lat * math.tan(math.radians(hour_degress)))
         return (hour, math.degrees(angle_radians))
     
     def _hour_angles_degrees(self):
@@ -81,6 +88,7 @@ class SundialGenerator(object):
         #  .....----'    | <- sin(latitude) * 600
         # ._____600______|
         gnomon_right_px = 1300 + (self._sin_lat * 600.0)
+        print GNOMON_BASE_CUT_TEMPLATE.render(width_px=thickness_px)
         print GNOMON_TEMPLATE.render(notch_px=thickness_px, gnomon_height_px=gnomon_right_px)
         first = True
         for marker in self._hour_angles_degrees():
@@ -95,9 +103,12 @@ class SundialGenerator(object):
             first = False
         for marker in self._quarter_hour_angles_degrees():
             print SVG_QUARTER_HOUR_MARKER % marker[1]
-        print GNOMON_BASE_CUT_TEMPLATE.render(width_px=thickness_px)
+        if self._dst:
+            self._digit_gen.set_rotate('0')
+            self._digit_gen.set_translate('120 540')
+            print self._digit_gen.dst_text()
         print SVG_FOOTER
 
 if __name__ == '__main__':
-    sg = SundialGenerator(37.7749, -122.4194, diameter_cm=24)
+    sg = SundialGenerator(37.7749, -122.4194, diameter_cm=24, adapt_for_meridian=False)
     sg.generate()
