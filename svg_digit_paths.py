@@ -27,6 +27,9 @@ class DigitPathGenerator(object):
     def set_rotate(self, svg_rotate):
         self._rotation = svg_rotate
 
+    def set_color(self, color_text):
+        self._color = color_text
+
     def svg_numeral(self, num):
         return (getattr(self, NUMERALS[num])(), NUMERAL_WIDTHS[num])
 

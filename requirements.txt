@@ -57,6 +57,7 @@ msrest==0.5.1
 msrestazure==0.4.33
 munch==2.3.2
 netifaces==0.10.7
+nose==1.3.7
 oauthlib==2.1.0
 openstacksdk==0.14.0
 os-client-config==1.31.2

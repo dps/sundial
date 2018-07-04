@@ -44,7 +44,7 @@ class SundialGenerator(object):
                  diameter_cm=12, material_thickness_inches=0.125,
                  dst=False, utc_offset_hrs=-8, adapt_for_meridian=True):
         self._lat = latitude
-        self._sin_lat = math.sin(math.radians(float(latitude)))
+        self._sin_lat = abs(math.sin(math.radians(float(latitude))))
         self._lng = longitude
         self._diameter_cm = diameter_cm
         self._material_thickness_inches = material_thickness_inches
