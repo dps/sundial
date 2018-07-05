@@ -27,5 +27,8 @@ optional arguments:
 # Example - San Francisco
 `python sundial.py --lat=37.7749 --lng=-122.4194 -d=24 -t=0.125 --dst -o golden/sf.svg`
 
-produces:
+## Template
 <img src='example.svg' />
+
+## Cut and assembled
+<img src='http://sundial.singleton.io/static/photo.jpg'/>
